@@ -44,7 +44,33 @@
  * ----------------------------------------------------------------------------------------------------------
  */
 #define MCPWM_CLK_PRESCALER		4
-#define MCPWM_FREQUENCY			15000
+#define MCPWM_FREQUENCY_HZ		20000												//20kHz, period = 50us
+#define MCPWM_RESOLUTION_HZ		10000000 											//10MHz, 1 tick = 0.1us
+#define MCPWM_PERIOD_TICKS		MCPWM_RESOLUTION_HZ / MCPWM_FREQUENCY				//PWM period in us
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Object to hold HAL data and configurations
+ * ----------------------------------------------------------------------------------------------------------
+ */
+typedef struct hal_obj
+{
+	//MCPWM objects
+	mcpwm_timer_handle_t pwm_timer;
+	mcpwm_oper_handle_t pwm_operators[3];
+	mcpwm_gen_handle_t pwm_generators[3];
+	mcpwm_comparator_handle_t pwm_comparators[3];
+	mcpwm_fault_handle_t pwm_fault;
+
+}hal_obj_t;
+
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Function to configure the MCPWMs
+ * ----------------------------------------------------------------------------------------------------------
+ */
+void configure_mcpwms(mcpwm_timer_handle_t timer, mcpwm_oper_handle_t operators[], mcpwm_gen_handle_t generators[], mcpwm_comparator_handle_t comparators[], mcpwm_fault_handle_t fault);
 
 
 #endif /* MAIN_HAL_H_ */
