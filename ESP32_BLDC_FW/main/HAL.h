@@ -48,6 +48,11 @@
 #define MCPWM_RESOLUTION_HZ		10000000 											//10MHz, 1 tick = 0.1us
 #define MCPWM_PERIOD_TICKS		MCPWM_RESOLUTION_HZ / MCPWM_FREQUENCY				//PWM period in us
 
+#define CMP_INDEX_A				0
+#define CMP_INDEX_B				1
+#define GEN_INDEX_HI			0
+#define GEN_INDEX_LO			1
+
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Object to hold HAL data and configurations
@@ -58,8 +63,8 @@ typedef struct hal_obj
 	//MCPWM objects
 	mcpwm_timer_handle_t pwm_timer;
 	mcpwm_oper_handle_t pwm_operators[3];
-	mcpwm_gen_handle_t pwm_generators[3];
-	mcpwm_comparator_handle_t pwm_comparators[3];
+	mcpwm_gen_handle_t pwm_generators[3][2];
+	mcpwm_comparator_handle_t pwm_comparators[3][2];
 	mcpwm_fault_handle_t pwm_fault;
 
 }hal_obj_t;
