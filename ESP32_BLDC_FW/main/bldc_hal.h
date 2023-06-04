@@ -8,12 +8,15 @@
 #ifndef MAIN_HAL_H_
 #define MAIN_HAL_H_
 
+#include "driver/mcpwm_prelude.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_oneshot.h"
+
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Pin Definitions
  * ----------------------------------------------------------------------------------------------------------
  */
-
 /*
  * Define the GPIOs for the MCPWMs
  */
@@ -23,6 +26,16 @@
 #define GPIO_B_LO 				39
 #define GPIO_C_HI 				38
 #define GPIO_C_LO 				37
+
+/*
+ * Define the ADC Channels
+ */
+#define ADC_A_V					ADC_CHANNEL_3
+#define ADC_B_V					ADC_CHANNEL_4
+#define ADC_C_V					ADC_CHANNEL_5
+#define ADC_DC_V				ADC_CHANNEL_6
+#define ADC_DC_I				ADC_CHANNEL_7
+#define ADC_CT_V				ADC_CHANNEL_8
 
 /*
  * Define the HALL GPIOs
@@ -43,15 +56,16 @@
  * HW-Related Constants
  * ----------------------------------------------------------------------------------------------------------
  */
-#define MCPWM_CLK_PRESCALER		4
+//Defines used to set the MCPWM clock prescaler
 #define MCPWM_FREQUENCY_HZ		20000												//20kHz, period = 50us
 #define MCPWM_RESOLUTION_HZ		10000000 											//10MHz, 1 tick = 0.1us
-#define MCPWM_PERIOD_TICKS		MCPWM_RESOLUTION_HZ / MCPWM_FREQUENCY				//PWM period in us
 
 #define CMP_INDEX_A				0
 #define CMP_INDEX_B				1
 #define GEN_INDEX_HI			0
 #define GEN_INDEX_LO			1
+
+#define ADC_ATTEN				ADC_ATTEN_DB_11
 
 /*
  * ----------------------------------------------------------------------------------------------------------
@@ -64,10 +78,26 @@ typedef struct hal_obj
 	mcpwm_timer_handle_t pwm_timer;
 	mcpwm_oper_handle_t pwm_operators[3];
 	mcpwm_gen_handle_t pwm_generators[3][2];
-	mcpwm_comparator_handle_t pwm_comparators[3][2];
+	mcpwm_cmpr_handle_t pwm_comparators[3][2];
 	mcpwm_fault_handle_t pwm_fault;
 
+	//ADC objects
+	adc_oneshot_unit_handle_t adc1_handle;
+	adc_cali_handle_t adc_chnl_cali;
 }hal_obj_t;
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Object to hold the measured values from the ADC channels
+ * ----------------------------------------------------------------------------------------------------------
+ */
+typedef struct adc_data
+{
+	float phaseV_V[3];
+	float dcV_V;
+	float dcI_A;
+	float ctV_V;
+}adc_data_t;
 
 
 /*
@@ -75,7 +105,15 @@ typedef struct hal_obj
  * Function to configure the MCPWMs
  * ----------------------------------------------------------------------------------------------------------
  */
-void configure_mcpwms(mcpwm_timer_handle_t timer, mcpwm_oper_handle_t operators[], mcpwm_gen_handle_t generators[], mcpwm_comparator_handle_t comparators[], mcpwm_fault_handle_t fault);
+void configure_mcpwms(hal_obj_t *hal_obj);
+
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Function to configure the ADCs
+ * ----------------------------------------------------------------------------------------------------------
+ */
+void configure_adcs(hal_obj_t *hal_obj);
 
 
 #endif /* MAIN_HAL_H_ */
