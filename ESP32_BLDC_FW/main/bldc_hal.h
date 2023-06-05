@@ -9,6 +9,7 @@
 #define MAIN_HAL_H_
 
 #include "driver/mcpwm_prelude.h"
+#include "driver/gpio.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_oneshot.h"
 
@@ -18,7 +19,7 @@
  * ----------------------------------------------------------------------------------------------------------
  */
 /*
- * Define the GPIOs for the MCPWMs
+ * MCPWMs' Pins
  */
 #define GPIO_A_HI 				42
 #define GPIO_A_LO 				41
@@ -28,7 +29,14 @@
 #define GPIO_C_LO 				37
 
 /*
- * Define the ADC Channels
+ * MCPWM Sense Pins (used to trigger ADC measurements in sync with PWMs)
+ */
+#define GPIO_PWM_SENSE_A			(1ULL << GPIO_NUM_15)
+#define GPIO_PWM_SENSE_B			(1ULL << GPIO_NUM_16)
+#define GPIO_PWM_SENSE_C			(1ULL << GPIO_NUM_17)
+
+/*
+ * ADC Channels
  */
 #define ADC_A_V					ADC_CHANNEL_3
 #define ADC_B_V					ADC_CHANNEL_4
@@ -38,7 +46,7 @@
 #define ADC_CT_V				ADC_CHANNEL_8
 
 /*
- * Define the HALL GPIOs
+ * HALL GPIOs
  */
 #define GPIO_HALL_A				48
 #define GPIO_HALL_B				47
@@ -47,9 +55,10 @@
 /*
  * DRV Pins
  */
-#define GPIO_NFAULT				11
-#define GPIO_NSLEEP				12
-#define GPIO_DRVOFF				13
+#define GPIO_NFAULT				GPIO_NUM_10
+#define GPIO_NSLEEP				(1ULL << GPIO_NUM_11)
+#define GPIO_DRVOFF				(1ULL << GPIO_NUM_36)
+#define GPIO_DRVLED				(1ULL << GPIO_NUM_35)
 
 /*
  * ----------------------------------------------------------------------------------------------------------
@@ -59,6 +68,7 @@
 //Defines used to set the MCPWM clock prescaler
 #define MCPWM_FREQUENCY_HZ		20000												//20kHz, period = 50us
 #define MCPWM_RESOLUTION_HZ		10000000 											//10MHz, 1 tick = 0.1us
+#define MCPWM_PERIOD_TICKS		500     		//MCPWM_RESOLUTION_HZ / MCPWM_FREQUENCY_HZ
 
 #define CMP_INDEX_A				0
 #define CMP_INDEX_B				1
@@ -102,18 +112,36 @@ typedef struct adc_data
 
 /*
  * ----------------------------------------------------------------------------------------------------------
- * Function to configure the MCPWMs
+ * MCPWM Related Functions
  * ----------------------------------------------------------------------------------------------------------
  */
+//Function to configure the MCPWMs
 void configure_mcpwms(hal_obj_t *hal_obj);
+
+//Function to set the duty cycle of each of the three MCPWMs (the low side signals are always the inverse + dead time)
+void mcpwm_set_duty(hal_obj_t *hal_obj, float dutyA, float dutyB, float dutyC);
 
 
 /*
  * ----------------------------------------------------------------------------------------------------------
- * Function to configure the ADCs
+ * ADC Related Functions
  * ----------------------------------------------------------------------------------------------------------
  */
+//Function to configure the ADCs
 void configure_adcs(hal_obj_t *hal_obj);
 
+//Function to read the ADC channels and save the results to the adc_data struct
+void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data);
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Other GPIO Functions
+ * ----------------------------------------------------------------------------------------------------------
+ */
+//Function to handle pwm interrupts
+//static void IRAM_ATTR pwm_isr_handler(void* arg);
+
+//Function to Configure the remaining GPIOs
+void configure_gpios();
 
 #endif /* MAIN_HAL_H_ */
