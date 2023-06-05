@@ -59,6 +59,7 @@
 //Defines used to set the MCPWM clock prescaler
 #define MCPWM_FREQUENCY_HZ		20000												//20kHz, period = 50us
 #define MCPWM_RESOLUTION_HZ		10000000 											//10MHz, 1 tick = 0.1us
+#define MCPWM_PERIOD_TICKS		500     		//MCPWM_RESOLUTION_HZ / MCPWM_FREQUENCY_HZ
 
 #define CMP_INDEX_A				0
 #define CMP_INDEX_B				1
@@ -102,18 +103,25 @@ typedef struct adc_data
 
 /*
  * ----------------------------------------------------------------------------------------------------------
- * Function to configure the MCPWMs
+ * MCPWM Related Functions
  * ----------------------------------------------------------------------------------------------------------
  */
+//Function to configure the MCPWMs
 void configure_mcpwms(hal_obj_t *hal_obj);
+
+//Function to set the duty cycle of each of the three MCPWMs (the low side signals are always the inverse + dead time)
+void mcpwm_set_duty(hal_obj_t *hal_obj, float dutyA, float dutyB, float dutyC);
 
 
 /*
  * ----------------------------------------------------------------------------------------------------------
- * Function to configure the ADCs
+ * ADC Related Functions
  * ----------------------------------------------------------------------------------------------------------
  */
+//Function to configure the ADCs
 void configure_adcs(hal_obj_t *hal_obj);
 
+//Function to read the ADC channels and save the results to the adc_data struct
+void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data);
 
 #endif /* MAIN_HAL_H_ */
