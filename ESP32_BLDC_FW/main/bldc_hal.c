@@ -10,7 +10,12 @@
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_adc/adc_oneshot.h"
 #include "driver/mcpwm_prelude.h"
+#include "driver/gpio.h"
 #include "esp_log.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "freertos/task.h"
 
 #include "bldc_hal.h"
 #include "project_config.h"
@@ -249,8 +254,50 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
 	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;
 }
 
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Other GPIO Functions
+ * ----------------------------------------------------------------------------------------------------------
+ */
+//Function to handle pwm interrupts
+static void IRAM_ATTR pwm_isr_handler(void* arg)
+{
+	vTaskDelay(1 / portTICK_PERIOD_MS);					//TODO: Define pwm_isr_handler
+														//Variables used in the isr need to be defined inDRAM?
+}
 
+//Function to Configure the remaining GPIOs
+void configure_gpios()
+{
+	//Configure nSleep and DRVLED to output, pullup enabled, no interrupts.
+	gpio_config_t io_conf = {
+			.intr_type = GPIO_INTR_DISABLE,
+			.mode = GPIO_MODE_OUTPUT,
+			.pin_bit_mask = (GPIO_NSLEEP | GPIO_DRVLED),
+			.pull_down_en = 0,
+			.pull_up_en = 1
+	};
+	gpio_config(&io_conf);
 
+	//Configure DRVOFF to output, pull-down enabled, no interrupts.
+	io_conf.pin_bit_mask = GPIO_DRVOFF;
+	io_conf.pull_down_en = 1;
+	io_conf.pull_up_en = 0;
+	gpio_config(&io_conf);
+
+	//Configure PWM sense pins to input, no pulls, interrupt enabled.
+	io_conf.intr_type = GPIO_INTR_POSEDGE;
+	io_conf.mode = GPIO_MODE_INPUT;
+	io_conf.pin_bit_mask = (GPIO_PWM_SENSE_A | GPIO_PWM_SENSE_B | GPIO_PWM_SENSE_C);
+	io_conf.pull_down_en = 0;
+	gpio_config(&io_conf);
+
+	//Set up the ISR and handler
+	gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_A, pwm_isr_handler, (void*) GPIO_PWM_SENSE_A);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_B, pwm_isr_handler, (void*) GPIO_PWM_SENSE_B);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_C, pwm_isr_handler, (void*) GPIO_PWM_SENSE_C);
+}
 
 
 
