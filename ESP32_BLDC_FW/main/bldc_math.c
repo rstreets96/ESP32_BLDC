@@ -29,7 +29,6 @@ pid_obj_t new_pid(float kp, float ki, float kd, float dt, float min, float max)
 	return pid_obj;
 }
 
-
 //Function to get the next output from the PID object
 float run_pid(pid_obj_t *pid_obj, float current_value)
 {
@@ -61,7 +60,41 @@ void reset_pid(pid_obj_t *pid_obj)
 
 /*
  * ----------------------------------------------------------------------------------------------------------
- * Functions for Clark and Parke Transforms
+ * Functions for Clarke Transforms
  * ----------------------------------------------------------------------------------------------------------
  */
+//Function to transform 3 phase values into the Beta vs Alpha domain
+void run_clarke(float phases[3], alpha_beta_t *alpha_beta)
+{
+	alpha_beta->alpha = ((2.0f * phases[0]) - (phases[1] + phases[2])) * MATH_ONE_OVER_THREE;
+	alpha_beta->beta = (phases[1] - phases[2]) * MATH_ONE_OVER_ROOT_THREE;
+}
+
+//Function to transform Beta vs Alpha domain into the 3 phase values
+void run_inv_clarke(alpha_beta_t alpha_beta, float *phases[3])
+{
+	phases[0] = alpha_beta.alpha;
+	phases[1] = (alpha_beta.alpha * (-MATH_ONE_OVER_TWO)) + (alpha_beta.beta * ROOT_THREE_OVER_TWO);
+	phases[2] = (alpha_beta.alpha * (-MATH_ONE_OVER_TWO)) - (alpha_beta.beta * ROOT_THREE_OVER_TWO);
+}
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Functions for Park Transforms
+ * ----------------------------------------------------------------------------------------------------------
+ */
+//Function to transform the stationary Beta vs Alpha domain to the rotating D-Q domain
+void run_park(float theta_rad, alpha_beta_t alpha_beta, d_q_t *d_q)							//Theta is calculated with motor equations and Valpha, Vbeta, Ialpha, and Ibeta
+{
+	d_q->direct = alpha_beta.alpha * __cos(theta_rad) + alpha_beta.beta * __sin(theta_rad);
+	d_q->quadrature = alpha_beta.beta * __cos(theta_rad) - alpha_beta.alpha * __sin(theta_rad);
+}
+
+//Function to transform the rotating D-Q domain to the stationary Beta vs Alpha domain
+void run_inv_park(float theta_rad, d_q_t d_q, alpha_beta_t *alpha_beta)
+{
+	alpha_beta->alpha = d_q.direct * __cos(theta_rad) - d_q.quadrature * __sin(theta_rad);
+	alpha_beta->beta = d_q.direct * __sin(theta_rad) + d_q.quadrature * __cos(theta_rad);
+}
+
 

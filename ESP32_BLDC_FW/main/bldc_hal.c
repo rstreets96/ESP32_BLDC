@@ -249,9 +249,9 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
 	adc_data->phaseV_V[0] = adc_raw[0] * 3.3 / 4096;		//TODO: Verify Attenuation workings
 	adc_data->phaseV_V[1] = adc_raw[1] * 3.3 / 4096;
 	adc_data->phaseV_V[2] = adc_raw[2] * 3.3 / 4096;
-	adc_data->dcV_V = adc_raw[3] * 3.3 / 4096;
-	adc_data->dcI_A = adc_raw[4] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
-	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;
+	adc_data->dcV_V = adc_raw[3] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
+	adc_data->phaseI_A[0] = adc_raw[4] * 3.3 / 4096;		//Current index will change with pwm timing
+	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;				//Find when to measure actual DC current
 }
 
 /*

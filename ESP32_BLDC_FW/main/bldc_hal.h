@@ -104,6 +104,7 @@ typedef struct hal_obj
 typedef struct adc_data
 {
 	float phaseV_V[3];
+	float phaseI_A[3];
 	float dcV_V;
 	float dcI_A;
 	float ctV_V;
