@@ -176,13 +176,13 @@ void configure_mcpwms(hal_obj_t *hal_obj)
 }
 
 //Function to set the duty cycle of each of the three MCPWMs (the low side signals are always the inverse + dead time)
-void mcpwm_set_duty(hal_obj_t *hal_obj, float dutyA, float dutyB, float dutyC)
+void mcpwm_set_duty(hal_obj_t *hal_obj, abc_t pwmData)
 {
 	//Change range from 0 - 1 to 0 - period_ticks
 	int cmpVal_A, cmpVal_B, cmpVal_C;
-	cmpVal_A = (1 - dutyA) * MCPWM_PERIOD_TICKS;
-	cmpVal_B = (1 - dutyB) * MCPWM_PERIOD_TICKS;
-	cmpVal_C = (1 - dutyC) * MCPWM_PERIOD_TICKS;
+	cmpVal_A = (1 - pwmData.a) * MCPWM_PERIOD_TICKS;
+	cmpVal_B = (1 - pwmData.b) * MCPWM_PERIOD_TICKS;
+	cmpVal_C = (1 - pwmData.c) * MCPWM_PERIOD_TICKS;
 
 
 	//CMP A and B are equal when pwms are symmetrical
@@ -246,12 +246,12 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
 	ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw[4]));
 	ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_CT_V, &adc_raw[5]));
 
-	adc_data->phaseV_V[0] = adc_raw[0] * 3.3 / 4096;		//TODO: Verify Attenuation workings
-	adc_data->phaseV_V[1] = adc_raw[1] * 3.3 / 4096;
-	adc_data->phaseV_V[2] = adc_raw[2] * 3.3 / 4096;
-	adc_data->dcV_V = adc_raw[3] * 3.3 / 4096;
-	adc_data->dcI_A = adc_raw[4] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
-	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;
+	adc_data->phaseV_V.a = adc_raw[0] * 3.3 / 4096;		//TODO: Verify Attenuation workings
+	adc_data->phaseV_V.b = adc_raw[1] * 3.3 / 4096;
+	adc_data->phaseV_V.c = adc_raw[2] * 3.3 / 4096;
+	adc_data->dcV_V = adc_raw[3] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
+	adc_data->phaseI_A.a = adc_raw[4] * 3.3 / 4096;		//Current index will change with pwm timing
+	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;				//Find when to measure actual DC current
 }
 
 /*

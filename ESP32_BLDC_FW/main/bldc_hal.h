@@ -13,6 +13,7 @@
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_oneshot.h"
 
+#include "bldc_math.h"
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Pin Definitions
@@ -103,7 +104,8 @@ typedef struct hal_obj
  */
 typedef struct adc_data
 {
-	float phaseV_V[3];
+	abc_t phaseV_V;
+	abc_t phaseI_A;
 	float dcV_V;
 	float dcI_A;
 	float ctV_V;
@@ -119,7 +121,7 @@ typedef struct adc_data
 void configure_mcpwms(hal_obj_t *hal_obj);
 
 //Function to set the duty cycle of each of the three MCPWMs (the low side signals are always the inverse + dead time)
-void mcpwm_set_duty(hal_obj_t *hal_obj, float dutyA, float dutyB, float dutyC);
+void mcpwm_set_duty(hal_obj_t *hal_obj, abc_t pwmData);
 
 
 /*
