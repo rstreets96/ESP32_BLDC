@@ -5,18 +5,21 @@
 
 #include "bldc_hal.h"
 #include "bldc_math.h"
+#include "motor_model.h"
 
 
 void app_main(void)
 {
-	hal_obj_t hal_obj;
+	//Creates motor object, initializes motor constants and math objects
+	motor_obj_t motor = new_mot_obj();
 
-	configure_mcpwms(&hal_obj);
-	configure_adcs(&hal_obj);
+	//Configure the IOs in the HAL
+	configure_mcpwms(&motor.hal_obj);
+	configure_adcs(&motor.hal_obj);
 	configure_gpios();
-	pid_obj_t speed_pid = new_pid(5, 5, 5, 0.01, 0, 300);
-	speed_pid.setpoint = 100;
-	run_pid(&speed_pid, 70);
+
+	run_motor_control(&motor);
+
 
     while (true) {
         printf("Hello from app_main!\n");
