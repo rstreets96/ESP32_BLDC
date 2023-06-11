@@ -126,4 +126,4 @@ In Figure 8 above, you can find the general form of a Luenberger observer.
 #### Figure 10. Luenberger Observer Stability [\(Source\)](https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf)
 
 ![Luenberger Observer Motor Equations](/Images/Luenberger4.PNG)
-#### Figure 11. Motor Model Fit into Luenberger Observer Form [\(Source\)]([https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf](https://pcimasia-expo.cn.messefrankfurt.com/content/dam/messefrankfurt-redaktion/pcim_asia/download/ppt_pac2021/Qianbao%20Mi.pdf))
+#### Figure 11. Motor Model Fit into Luenberger Observer Form [\(Source\)](https://pcimasia-expo.cn.messefrankfurt.com/content/dam/messefrankfurt-redaktion/pcim_asia/download/ppt_pac2021/Qianbao%20Mi.pdf)
