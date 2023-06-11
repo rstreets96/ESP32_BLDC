@@ -48,7 +48,7 @@ void run_motor_control(motor_obj_t *motor)
 #endif
 	//Save angle and speed from chosen observer
 	motor->angle_foc_rad = motor->observer.mot_angle;
-	motor->speed_RPM = motor->observer.mot_speed * RAD_SEC_TO_RPM;
+	motor->speed_RPM = motor->observer.mot_speed * RAD_SEC_TO_RPM;			//Does this speed value need filtering?
 
 	//Run Speed PID Loop
 	motor->i_stator_setpoint = run_pid(&motor->speed_pid, motor->speed_RPM);
@@ -74,7 +74,7 @@ void run_motor_control(motor_obj_t *motor)
 	run_inv_park(motor->angle_foc_rad, motor->v_dq, &motor->v_ab);
 
 	//Convert Alpha-Beta voltages to 3-phase for PWM outputs
-	run_inv_clarke(motor->v_ab, &motor->v_phase_out_v);
+	run_inv_clarke(motor->v_ab, &motor->v_phase_out_v);													//TODO:SVM verification. Maybe just subtract Vct?
 
 	//Convert to per unit values
 	motor->v_phase_out_pu.a = motor->v_phase_out_v.a / motor->adc_data.dcV_V;							//TODO: Avoid float division? Do this in a slower loop?
