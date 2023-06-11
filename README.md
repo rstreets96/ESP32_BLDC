@@ -88,3 +88,42 @@ transform, where theta_rad is the angle between references and alpha_beta.alpha 
 transform.
 
 ![Park Math Code](/Images/ParkMath.PNG)
+
+## Rotor Angle Tracking
+To make use of the Park transform I just described, we need the angle of the rotor relative to that stationary Alpha-Beta grid. There are 
+many ways to go about this, but they all can be split into two groups: Sensored and Sensorless.
+
+For the sensored method, you need a motor equipped with a position sensor. These sensors can be things like encoders or a set of three hall 
+sensors. While this method allows for simple angle detection at any motor speed, it has its downsides. The sensors can add another failure point
+to the motor, and the resolution of the angle reading can also be lacking (i.e. the common set of three hall sensors have six different states,
+so the rotor angle is only known to be in a 60 degree sector).
+
+Sensorless motor control, however, can provide a more continuous rotor angle approximation without adding extra hardware to the motor. Its
+downside is that it often cannot determine rotor position at low speeds or when stopped. Because of this, sensors are often used in combination 
+with this method, providing rough angles at low speeds and switching to sensorless at higher speeds.
+
+The sensorless motor control also adds some complexity to the control process. It is often done by tracking the back-emf of the motor, which 
+increases in magnitude as the motor spins faster. Unfortunately, the back-emf is not an easily measured signal. In Figure 7 below, the Ra is 
+the resistance of the windings, La is the inductance of the windings, and the e(t) function is the back-emf that we're interested in. 
+Unfortunately, we only have access to Va(t) and ia(t), so we'll have to determine the back-emf from these values. This is often done by a 
+complex control system known as an observer. In this project, I've chosen to use a Luenberger observer. I'll attempt to explain how this works
+in the next section.
+
+![Motor Equivalent Circuit](/Images/MotorEquivalentCircuit.PNG)
+
+#### Figure 7. Equivalent Circuit of a Motor [\(Source\)](https://www.researchgate.net/figure/Equivalent-circuit-of-an-armature-controlled-dc-motor_fig1_3050910)
+
+### Luenberger Observer
+![Luenberger Observer Form](/Images/Luenberger1.PNG)
+#### Figure 8. Luenberger Observer Form [\(Source\)](https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf)
+
+In Figure 8 above, you can find the general form of a Luenberger observer. 
+
+![Luenberger Observer with Error](/Images/Luenberger2.PNG)
+#### Figure 9. Luenberger Observer Form [\(Source\)](https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf)
+
+![Luenberger Observer Stability](/Images/Luenberger3.PNG)
+#### Figure 10. Luenberger Observer Stability [\(Source\)](https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf)
+
+![Luenberger Observer Motor Equations](/Images/Luenberger4.PNG)
+#### Figure 11. Motor Model Fit into Luenberger Observer Form [\(Source\)]([https://www.ece.rutgers.edu/~gajic/psfiles/observers.pdf](https://pcimasia-expo.cn.messefrankfurt.com/content/dam/messefrankfurt-redaktion/pcim_asia/download/ppt_pac2021/Qianbao%20Mi.pdf))
