@@ -80,6 +80,22 @@
 
 /*
  * ----------------------------------------------------------------------------------------------------------
+ * Object to hold the measured values from the ADC channels
+ * ----------------------------------------------------------------------------------------------------------
+ */
+typedef struct adc_data
+{
+	abc_t phaseV_V;
+	abc_t phaseV_raw;
+	abc_t phaseI_A;
+	abc_t phaseI_raw;
+	float dcV_V;
+	float dcI_A;
+	float ctV_V;
+}adc_data_t;
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
  * Object to hold HAL data and configurations
  * ----------------------------------------------------------------------------------------------------------
  */
@@ -95,22 +111,10 @@ typedef struct hal_obj
 	//ADC objects
 	adc_oneshot_unit_handle_t adc1_handle;
 	adc_cali_handle_t adc_chnl_cali;
+
+	//Object to hold ADC measurements
+	adc_data_t adc_data;
 }hal_obj_t;
-
-/*
- * ----------------------------------------------------------------------------------------------------------
- * Object to hold the measured values from the ADC channels
- * ----------------------------------------------------------------------------------------------------------
- */
-typedef struct adc_data
-{
-	abc_t phaseV_V;
-	abc_t phaseI_A;
-	float dcV_V;
-	float dcI_A;
-	float ctV_V;
-}adc_data_t;
-
 
 /*
  * ----------------------------------------------------------------------------------------------------------
@@ -133,7 +137,7 @@ void mcpwm_set_duty(hal_obj_t *hal_obj, abc_t pwmData);
 void configure_adcs(hal_obj_t *hal_obj);
 
 //Function to read the ADC channels and save the results to the adc_data struct
-void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data);
+void read_adcs(hal_obj_t *hal_obj);
 
 /*
  * ----------------------------------------------------------------------------------------------------------
@@ -144,6 +148,6 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data);
 //static void IRAM_ATTR pwm_isr_handler(void* arg);
 
 //Function to Configure the remaining GPIOs
-void configure_gpios();
+void configure_gpios(hal_obj_t *hal_obj);
 
 #endif /* MAIN_HAL_H_ */

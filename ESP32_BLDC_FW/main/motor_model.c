@@ -39,7 +39,7 @@ motor_obj_t new_mot_obj(void)
 void run_motor_control(motor_obj_t *motor)
 {
 	//Convert A,B,C currents to Alpa-Beta
-	run_clarke(motor->adc_data.phaseI_A, &motor->i_ab);
+	run_clarke(motor->hal_obj.adc_data.phaseI_A, &motor->i_ab);
 
 #if defined(LUENBERGER)
 	//Run Observer using measured Alpha-Beta current output and voltage input
@@ -77,9 +77,9 @@ void run_motor_control(motor_obj_t *motor)
 	run_inv_clarke(motor->v_ab, &motor->v_phase_out_v);													//TODO:SVM verification. Maybe just subtract Vct?
 
 	//Convert to per unit values
-	motor->v_phase_out_pu.a = motor->v_phase_out_v.a / motor->adc_data.dcV_V;							//TODO: Avoid float division? Do this in a slower loop?
-	motor->v_phase_out_pu.b = motor->v_phase_out_v.b / motor->adc_data.dcV_V;
-	motor->v_phase_out_pu.c = motor->v_phase_out_v.c / motor->adc_data.dcV_V;
+	motor->v_phase_out_pu.a = motor->v_phase_out_v.a / motor->hal_obj.adc_data.dcV_V;							//TODO: Avoid float division? Do this in a slower loop?
+	motor->v_phase_out_pu.b = motor->v_phase_out_v.b / motor->hal_obj.adc_data.dcV_V;
+	motor->v_phase_out_pu.c = motor->v_phase_out_v.c / motor->hal_obj.adc_data.dcV_V;
 
 	//Write PWM data with SVM
 	mcpwm_set_duty(&motor->hal_obj, motor->v_phase_out_pu);

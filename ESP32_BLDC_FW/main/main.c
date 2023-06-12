@@ -16,7 +16,8 @@ void app_main(void)
 	//Configure the IOs in the HAL
 	configure_mcpwms(&motor.hal_obj);
 	configure_adcs(&motor.hal_obj);
-	configure_gpios();
+	configure_gpios(&motor.hal_obj);
+	read_adcs(&motor.hal_obj);
 
 	run_motor_control(&motor);
 

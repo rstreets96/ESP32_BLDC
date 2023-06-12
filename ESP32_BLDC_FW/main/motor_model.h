@@ -46,7 +46,6 @@ typedef struct motor_obj
 
 	//HAL objects to interface with the motor and peripherals
 	hal_obj_t hal_obj;
-	adc_data_t adc_data;
 
 	//Math objects for FOC
 	pid_obj_t speed_pid;

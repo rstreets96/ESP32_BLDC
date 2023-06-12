@@ -236,7 +236,7 @@ void configure_adcs(hal_obj_t *hal_obj)
 }
 
 //Function to read the ADC channels and save the results to the adc_data struct
-void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
+void read_adcs(hal_obj_t *hal_obj)
 {
 	int adc_raw[6];
 	ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_A_V, &adc_raw[0]));
@@ -246,12 +246,12 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
 	ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw[4]));
 	ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_CT_V, &adc_raw[5]));
 
-	adc_data->phaseV_V.a = adc_raw[0] * 3.3 / 4096;		//TODO: Verify Attenuation workings
-	adc_data->phaseV_V.b = adc_raw[1] * 3.3 / 4096;
-	adc_data->phaseV_V.c = adc_raw[2] * 3.3 / 4096;
-	adc_data->dcV_V = adc_raw[3] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
-	adc_data->phaseI_A.a = adc_raw[4] * 3.3 / 4096;		//Current index will change with pwm timing
-	adc_data->ctV_V = adc_raw[5] * 3.3 / 4096;				//Find when to measure actual DC current
+	hal_obj->adc_data.phaseV_raw.b = adc_raw[0] * 3.3 / 4096;		//TODO: Verify Attenuation workings
+	hal_obj->adc_data.phaseV_raw.b = adc_raw[1] * 3.3 / 4096;
+	hal_obj->adc_data.phaseV_raw.c = adc_raw[2] * 3.3 / 4096;
+	hal_obj->adc_data.dcV_V = adc_raw[3] * 3.3 / 4096;				//TODO: Change these scalers based on hardware
+	hal_obj->adc_data.phaseI_raw.a = adc_raw[4] * 3.3 / 4096;		//Current index will change with pwm timing
+	hal_obj->adc_data.ctV_V = adc_raw[5] * 3.3 / 4096;				//Find when to measure actual DC current
 }
 
 /*
@@ -260,14 +260,52 @@ void read_adcs(hal_obj_t *hal_obj, adc_data_t *adc_data)
  * ----------------------------------------------------------------------------------------------------------
  */
 //Function to handle pwm interrupts
-static void IRAM_ATTR pwm_isr_handler(void* arg)
+static void IRAM_ATTR pwm_isr_handler(void* arg)			//TODO: Delay Measurements? Maybe this ISR starts timer?
 {
-	vTaskDelay(1 / portTICK_PERIOD_MS);					//TODO: Define pwm_isr_handler
-														//Variables used in the isr need to be defined inDRAM?
+	hal_obj_t *hal_obj = (hal_obj_t *)arg;					//TODO: Verify that this works
+
+	//Read the states of the three high-side pwms
+	int pwmState = (gpio_get_level(GPIO_PWM_SENSE_A) << 2) + (gpio_get_level(GPIO_PWM_SENSE_B) << 1) + gpio_get_level(GPIO_PWM_SENSE_C);
+	int adc_raw;
+
+	//Based on pwmState, read the dc current and assign it to the ative phase
+	switch(pwmState){
+		case 0:
+			break;
+		case 1:		//Only C high-side on
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.c = adc_raw;
+			break;
+		case 2:		//Only B high-side on
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.b = adc_raw;
+			break;
+		case 3:		//B and C high-side on (Only A low-side on)
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.a = -adc_raw;
+			break;
+		case 4:		//Only A high-side on
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.a = adc_raw;
+			break;
+		case 5:		//A and C high-side on (Only B low-side on)
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.b = -adc_raw;
+			break;
+		case 6:		//A and B high-side on (Only C low-side on)
+			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
+			hal_obj->adc_data.phaseI_raw.c = -adc_raw;
+			break;
+		case 7:
+			break;
+		default:
+			break;
+	}
+														//Variables used in the isr need to be defined in DRAM
 }
 
 //Function to Configure the remaining GPIOs
-void configure_gpios()
+void configure_gpios(hal_obj_t *hal_obj)
 {
 	//Configure nSleep and DRVLED to output, pullup enabled, no interrupts.
 	gpio_config_t io_conf = {
@@ -294,9 +332,9 @@ void configure_gpios()
 
 	//Set up the ISR and handler
 	gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_A, pwm_isr_handler, (void*) GPIO_PWM_SENSE_A);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_B, pwm_isr_handler, (void*) GPIO_PWM_SENSE_B);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_C, pwm_isr_handler, (void*) GPIO_PWM_SENSE_C);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_A, pwm_isr_handler, (void*) &hal_obj);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_B, pwm_isr_handler, (void*) &hal_obj);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_C, pwm_isr_handler, (void*) &hal_obj);
 }
 
 
