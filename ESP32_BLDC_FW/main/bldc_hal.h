@@ -32,9 +32,9 @@
 /*
  * MCPWM Sense Pins (used to trigger ADC measurements in sync with PWMs)
  */
-#define GPIO_PWM_SENSE_A			(1ULL << GPIO_NUM_15)
-#define GPIO_PWM_SENSE_B			(1ULL << GPIO_NUM_16)
-#define GPIO_PWM_SENSE_C			(1ULL << GPIO_NUM_17)
+#define GPIO_PWM_SENSE_A			(1ULL << GPIO_NUM_14)
+#define GPIO_PWM_SENSE_B			(1ULL << GPIO_NUM_17)
+#define GPIO_PWM_SENSE_C			(1ULL << GPIO_NUM_18)
 
 /*
  * ADC Channels
@@ -56,10 +56,10 @@
 /*
  * DRV Pins
  */
-#define GPIO_NFAULT				GPIO_NUM_10
-#define GPIO_NSLEEP				(1ULL << GPIO_NUM_11)
-#define GPIO_DRVOFF				(1ULL << GPIO_NUM_36)
-#define GPIO_DRVLED				(1ULL << GPIO_NUM_35)
+#define GPIO_NFAULT				GPIO_NUM_11
+#define GPIO_NSLEEP				(1ULL << GPIO_NUM_12)
+#define GPIO_DRVOFF				(1ULL << GPIO_NUM_13)
+//#define GPIO_DRVLED				(1ULL << GPIO_NUM_35)
 
 /*
  * ----------------------------------------------------------------------------------------------------------

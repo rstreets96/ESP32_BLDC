@@ -6,4 +6,5 @@
   (lib (name "dk_PMIC-Voltage-Regulators-DC-DC-Switching-Regulators")(type "Legacy")(uri "C:/Users/rstre/KiCad Libraries/digikey-kiad-library/digikey-symbols/dk_PMIC-Voltage-Regulators-DC-DC-Switching-Regulators.lib")(options "")(descr ""))
   (lib (name "dk_PMIC-Voltage-Regulators-Linear")(type "Legacy")(uri "C:/Users/rstre/KiCad Libraries/digikey-kiad-library/digikey-symbols/dk_PMIC-Voltage-Regulators-Linear.lib")(options "")(descr ""))
   (lib (name "dk_Pushbutton-Switches")(type "Legacy")(uri "C:/Users/rstre/KiCad Libraries/digikey-kiad-library/digikey-symbols/dk_Pushbutton-Switches.lib")(options "")(descr ""))
+  (lib (name "2023-06-13_18-48-28")(type "KiCad")(uri "C:/Users/rstre/Downloads/ul_PDRV8329AREER/KiCADv6/2023-06-13_18-48-28.kicad_sym")(options "")(descr ""))
 )
