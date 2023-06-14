@@ -254,12 +254,23 @@ void read_adcs(hal_obj_t *hal_obj)
 	hal_obj->adc_data.ctV_V = adc_raw[5] * 3.3 / 4096;				//Find when to measure actual DC current
 }
 
+//Function to convert current measurements from raw value to amperage
+float current_raw_to_amps(float curr_raw)
+{
+	return ((curr_raw * ADC_ATTEN_FACTOR - CURR_OFFSET) * ONE_OVER_RES_GAIN);
+}
+
+float voltage_raw_to_volts(float volt_raw, float vbatt_over_two)
+{
+	return ((volt_raw * ADC_ATTEN_FACTOR * VOLT_DIV_SCALAR) - vbatt_over_two);
+}
+
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Other GPIO Functions
  * ----------------------------------------------------------------------------------------------------------
  */
-//Function to handle pwm interrupts
+//Function to handle pwm interrupts 						Variables used in the isr need to be defined in DRAM
 static void IRAM_ATTR pwm_isr_handler(void* arg)			//TODO: Delay Measurements? Maybe this ISR starts timer?
 {
 	hal_obj_t *hal_obj = (hal_obj_t *)arg;					//TODO: Verify that this works
@@ -301,7 +312,7 @@ static void IRAM_ATTR pwm_isr_handler(void* arg)			//TODO: Delay Measurements? M
 		default:
 			break;
 	}
-														//Variables used in the isr need to be defined in DRAM
+
 }
 
 //Function to Configure the remaining GPIOs

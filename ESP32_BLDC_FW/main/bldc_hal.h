@@ -59,7 +59,25 @@
 #define GPIO_NFAULT				GPIO_NUM_11
 #define GPIO_NSLEEP				(1ULL << GPIO_NUM_12)
 #define GPIO_DRVOFF				(1ULL << GPIO_NUM_13)
-//#define GPIO_DRVLED				(1ULL << GPIO_NUM_35)
+#define GPIO_DRVLED				(1ULL << GPIO_NUM_35)
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * ADC Conversion Factors
+ * ----------------------------------------------------------------------------------------------------------
+ */
+//Shared Values
+#define ADC_ATTEN_FACTOR		(2.0f)						//TODO:Learn more about this
+
+//Current Measurements
+#define CURR_RES_OHMS			(0.001f)					//Current shunt resistor
+#define CSA_GAIN				(5.0f)						//Can be 5, 10, 20, or 40
+#define ONE_OVER_RES_GAIN		(200.0f)					//1 / (CURR_RES_OHMS * CSA_GAIN)
+#define CURR_OFFSET				(1.65f)						//Set with CSA gain of the DRV8329
+
+//Voltage Measurements
+#define VOLT_DIV_SCALAR			(23.044f)					//114.99k / 4.99k, same for all voltage measurements
+
 
 /*
  * ----------------------------------------------------------------------------------------------------------
@@ -139,14 +157,18 @@ void configure_adcs(hal_obj_t *hal_obj);
 //Function to read the ADC channels and save the results to the adc_data struct
 void read_adcs(hal_obj_t *hal_obj);
 
+//Function to convert current measurements from raw value to amperage
+float current_raw_to_amps(float curr_raw);
+
+//Function to convert current measurements from raw value to volts
+float voltage_raw_to_volts(float volt_raw, float vbatt_over_two);
+
+
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Other GPIO Functions
  * ----------------------------------------------------------------------------------------------------------
  */
-//Function to handle pwm interrupts
-//static void IRAM_ATTR pwm_isr_handler(void* arg);
-
 //Function to Configure the remaining GPIOs
 void configure_gpios(hal_obj_t *hal_obj);
 

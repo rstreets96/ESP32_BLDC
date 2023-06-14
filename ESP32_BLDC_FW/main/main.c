@@ -7,7 +7,6 @@
 #include "bldc_math.h"
 #include "motor_model.h"
 
-
 void app_main(void)
 {
 	//Creates motor object, initializes motor constants and math objects
