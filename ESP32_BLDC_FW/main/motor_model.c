@@ -3,6 +3,7 @@
  *
  *  Created on: Jun 5, 2023
  *      Author: rstre
+ *  This file houses high-level functions related to the motor
  */
 #include "motor_model.h"
 #include "bldc_math.h"
@@ -20,6 +21,7 @@ motor_obj_t new_mot_obj(void)
 	motor.l_s = L_S_H;
 	motor.pole_pairs = POLE_PAIRS;
 	motor.flux_linkage = FLUX_LINKAGE;
+	motor.locked_flag = false;
 
 	motor.speed_pid = new_pid(1.0, 1.0, 1.0, CONTROL_PERIOD_S, SPEED_MIN_RPM, SPEED_MAX_RPM); 		//TODO: Tune these PIDs (based off motor parameters?)
 #if defined(FIELD_WEAKENING)
@@ -86,8 +88,22 @@ void run_motor_control(motor_obj_t *motor)
 
 }
 
-
-
+//Function to check measurements against fault thresholds
+void motor_fault_check(motor_obj_t *motor)
+{
+	if(motor->i_stator_measured > OVER_CURRENT_A)				//Add a timer to only trigger if in error zone long enough
+	{
+		motor->faults = motor->faults & (1 << OVER_CURRENT_BIT);
+	}
+	if(motor->hal_obj.adc_data.dcV_V > OVER_VOLTAGE_V)
+	{
+		motor->faults = motor->faults & (1 << OVER_VOLTAGE_BIT);
+	}
+	if(motor->hal_obj.adc_data.dcV_V < UNDER_VOLTAGE_V)
+	{
+		motor->faults = motor->faults & (1 << UNDER_VOLTAGE_BIT);
+	}
+}
 
 
 

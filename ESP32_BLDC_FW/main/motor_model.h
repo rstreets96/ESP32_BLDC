@@ -31,6 +31,27 @@
 
 #define OBSERVER_GAIN					(0.5f)
 
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Limits and Fault Thresholds
+ * ----------------------------------------------------------------------------------------------------------
+ */
+#define MAX_CURRENT_A					(15.0f)
+#define OVER_CURRENT_A					(20.0f)
+#define OVER_VOLTAGE_V					(55.0f)
+#define UNDER_VOLTAGE_V					(37.0f)
+
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Fault Bit Numbers
+ * ----------------------------------------------------------------------------------------------------------
+ */
+#define OVER_CURRENT_BIT				(0)
+#define OVER_VOLTAGE_BIT				(1)
+#define UNDER_VOLTAGE_BIT				(2)
+
 /*
  * ----------------------------------------------------------------------------------------------------------
  * Main Motor Object
@@ -56,6 +77,7 @@ typedef struct motor_obj
 	d_q_t i_dq_measured;
 	d_q_t i_dq_setpoint;
 	d_q_t v_dq;
+	float i_stator_measured;
 	float i_stator_setpoint;
 	abc_t v_phase_out_v;
 	abc_t v_phase_out_pu;  //Normalized to DC voltage
@@ -65,6 +87,9 @@ typedef struct motor_obj
 	float angle_foc_rad;
 	float speed_RPM;
 
+	bool locked_flag;							//Prevent two tasks from accessing it at once
+	bool enable_motor;
+	int faults;
 
 }motor_obj_t;
 
@@ -78,5 +103,8 @@ motor_obj_t new_mot_obj(void);
 
 //Function to run one control loop
 void run_motor_control(motor_obj_t *motor);
+
+//Function to check measurements against fault thresholds
+void motor_fault_check(motor_obj_t *motor);
 
 #endif /* MAIN_MOTOR_MODEL_H_ */

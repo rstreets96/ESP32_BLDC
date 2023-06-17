@@ -271,7 +271,7 @@ float voltage_raw_to_volts(float volt_raw, float vbatt_over_two)
  * ----------------------------------------------------------------------------------------------------------
  */
 //Function to handle pwm interrupts 						Variables used in the isr need to be defined in DRAM
-static void IRAM_ATTR pwm_isr_handler(void* arg)			//TODO: Delay Measurements? Maybe this ISR starts timer?
+static void IRAM_ATTR pwm_isr_handler(void *arg)			//TODO: Delay Measurements? Maybe this ISR starts timer?
 {
 	hal_obj_t *hal_obj = (hal_obj_t *)arg;					//TODO: Verify that this works
 
