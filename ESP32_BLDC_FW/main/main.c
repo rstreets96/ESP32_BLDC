@@ -5,11 +5,17 @@
 #include "motor_model.h"
 #include "tasks.h"
 
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Global Variables
+ * ----------------------------------------------------------------------------------------------------------
+ */
+	motor_obj_t global_motor;
+
 void app_main(void)
 {
 	//Creates motor object, initializes motor constants and math objects
-	motor_obj_t motor = new_mot_obj();
+	global_motor = new_mot_obj();
 
-	start_motor_control(&motor);
-
+	start_motor_control();
 }

@@ -14,15 +14,24 @@
 #include "esp_log.h"
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
-#include "freertos/task.h"
+#include "freertos/queue.h"
 
+#include "motor_model.h"
 #include "bldc_hal.h"
 #include "project_config.h"
+#include "tasks.h"
 
 
 //Tag used for ESP serial console messages
 static const char TAG[] = "HAL";
+
+/*
+ * ----------------------------------------------------------------------------------------------------------
+ * Global Variables
+ * ----------------------------------------------------------------------------------------------------------
+ */
+extern motor_obj_t global_motor;
+extern QueueHandle_t pwm_isr_adc_queue_handle;
 
 
 /*
@@ -270,42 +279,54 @@ float voltage_raw_to_volts(float volt_raw, float vbatt_over_two)
  * Other GPIO Functions
  * ----------------------------------------------------------------------------------------------------------
  */
-//Function to handle pwm interrupts 						Variables used in the isr need to be defined in DRAM
+//Function to handle pwm interrupts 						Variables used in the isr need to be defined in DRAM, Can't use Floats in ISR with FreeRTOS
 static void IRAM_ATTR pwm_isr_handler(void *arg)			//TODO: Delay Measurements? Maybe this ISR starts timer?
 {
-	hal_obj_t *hal_obj = (hal_obj_t *)arg;					//TODO: Verify that this works
 
 	//Read the states of the three high-side pwms
 	int pwmState = (gpio_get_level(GPIO_PWM_SENSE_A) << 2) + (gpio_get_level(GPIO_PWM_SENSE_B) << 1) + gpio_get_level(GPIO_PWM_SENSE_C);
 	int adc_raw;
+	isr_adc_queue_message_t msg;
 
 	//Based on pwmState, read the dc current and assign it to the ative phase
 	switch(pwmState){
 		case 0:
 			break;
 		case 1:		//Only C high-side on
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.c = adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));		//Move these readings to task that receives msg?
+			global_motor.hal_obj.adc_data.phaseI_raw.c = adc_raw;
+			msg.msgID = PHASE_C_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 2:		//Only B high-side on
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.b = adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));
+			global_motor.hal_obj.adc_data.phaseI_raw.b = adc_raw;
+			msg.msgID = PHASE_B_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 3:		//B and C high-side on (Only A low-side on)
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.a = -adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));
+			global_motor.hal_obj.adc_data.phaseI_raw.a = -adc_raw;
+			msg.msgID = PHASE_A_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 4:		//Only A high-side on
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.a = adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));
+			global_motor.hal_obj.adc_data.phaseI_raw.a = adc_raw;
+			msg.msgID = PHASE_A_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 5:		//A and C high-side on (Only B low-side on)
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.b = -adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));
+			global_motor.hal_obj.adc_data.phaseI_raw.b = -adc_raw;
+			msg.msgID = PHASE_B_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 6:		//A and B high-side on (Only C low-side on)
-			ESP_ERROR_CHECK(adc_oneshot_read(hal_obj->adc1_handle, ADC_DC_I, &adc_raw));
-			hal_obj->adc_data.phaseI_raw.c = -adc_raw;
+			ESP_ERROR_CHECK(adc_oneshot_read(global_motor.hal_obj.adc1_handle, ADC_DC_I, &adc_raw));
+			global_motor.hal_obj.adc_data.phaseI_raw.c = -adc_raw;
+			msg.msgID = PHASE_C_CONVERSION;
+			xQueueSend(pwm_isr_adc_queue_handle, &msg, portMAX_DELAY);
 			break;
 		case 7:
 			break;
@@ -343,9 +364,9 @@ void configure_gpios(hal_obj_t *hal_obj)
 
 	//Set up the ISR and handler
 	gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_A, pwm_isr_handler, (void*) &hal_obj);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_B, pwm_isr_handler, (void*) &hal_obj);
-	gpio_isr_handler_add(GPIO_PWM_SENSE_C, pwm_isr_handler, (void*) &hal_obj);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_A, pwm_isr_handler, (void*) GPIO_PWM_SENSE_A);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_B, pwm_isr_handler, (void*) GPIO_PWM_SENSE_B);
+	gpio_isr_handler_add(GPIO_PWM_SENSE_C, pwm_isr_handler, (void*) GPIO_PWM_SENSE_C);
 }
 
 
